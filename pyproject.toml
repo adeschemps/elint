@@ -5,11 +5,38 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "einops>=0.8.2",
+    "h5py>=3.16.0",
+    "loguru>=0.7.3",
     "matplotlib>=3.10.9",
+    "pydantic>=2.13.3",
     "torch>=2.11.0",
+    "tqdm>=4.67.3",
 ]
 
 [dependency-groups]
 dev = [
     "ipdb>=0.13.13",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# Core rule sets:
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes (unused imports, etc.)
+    "I",   # isort (import sorting)
+    "B",   # flake8-bugbear (common pitfalls)
+]
+
+# Auto-fix where possible
+fixable = ["ALL"]
+
+[tool.ruff.format]
+# Optional but nice if you want Ruff to format too
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
