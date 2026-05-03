@@ -12,10 +12,14 @@ class Evaluator:
         model: torch.nn.Module,
         summary_writer: SummaryWriter,
         loader: DataLoader,
+        device: str,
+        use_amp: bool,
     ) -> None:
         self.model = model
         self.summary_writer = summary_writer
         self.loader = loader
+        self.device = device
+        self.use_amp = use_amp
 
     def evaluate(self, step: int) -> None:
         self.model.eval()
@@ -28,20 +32,29 @@ class Evaluator:
 
         with tqdm(self.loader, total=len(self.loader)) as pbar:
             for batch in pbar:
-                with torch.no_grad():
+                batch = batch.to(self.device)
+                with torch.no_grad(), torch.amp.autocast(
+                    device_type=self.device,
+                    dtype=torch.bfloat16,
+                    enabled=self.use_amp,
+                ):
                     predicted = self.model(batch[:, :-1])
                     loss = torch.nn.functional.mse_loss(
                         input=predicted, target=batch[:, 1:], reduction="mean"
                     )
-                    losses.append(loss.item())
+                losses.append(loss.item())
 
-                    if plot_predicted is None:
-                        plot_predicted = predicted.cpu()
-                        plot_true = batch[:, 1:].cpu()
+                if plot_predicted is None:
+                    plot_predicted = predicted.float().cpu()
+                    plot_true = batch[:, 1:].float().cpu()
 
         self.summary_writer.add_scalar(
             "Val/loss", torch.tensor(losses).mean().item(), step
         )
+
+        if plot_predicted is None or plot_true is None:
+            self.model.train()
+            return
 
         for i in range(plot_predicted.shape[0]):
             fig, ax = plt.subplots()

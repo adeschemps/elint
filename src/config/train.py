@@ -36,3 +36,5 @@ class TrainingArgs(StrictBaseModel):
     grad_accum_steps: int = 1
     eval_every: int = 500
     base_lr: float = 5e-4
+    log_dir: Path | None = None
+    mixed_precision: bool = True

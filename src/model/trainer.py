@@ -20,12 +20,16 @@ class Trainer:
         summary_writer: SummaryWriter,
         loader: DataLoader,
         grad_accum_steps: int,
+        device: str,
+        use_amp: bool,
     ) -> None:
         self.model = model
         self.optimizer = optimizer
         self.summary_writer = summary_writer
         self.loader = loader
         self.grad_accum_steps = grad_accum_steps
+        self.device = device
+        self.use_amp = use_amp
         self._batch_iter = _cycle(loader)
 
     def train_step(self, step: int) -> float:
@@ -33,11 +37,16 @@ class Trainer:
 
         losses: list[float] = []
         for _ in range(self.grad_accum_steps):
-            batch = next(self._batch_iter)
-            predicted = self.model(batch[:, :-1])
-            loss = torch.nn.functional.mse_loss(
-                input=predicted, target=batch[:, 1:], reduction="mean"
-            )
+            batch = next(self._batch_iter).to(self.device)
+            with torch.amp.autocast(
+                device_type=self.device,
+                dtype=torch.bfloat16,
+                enabled=self.use_amp,
+            ):
+                predicted = self.model(batch[:, :-1])
+                loss = torch.nn.functional.mse_loss(
+                    input=predicted, target=batch[:, 1:], reduction="mean"
+                )
             (loss / self.grad_accum_steps).backward()
             losses.append(loss.item())
 

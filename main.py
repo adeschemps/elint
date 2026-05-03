@@ -31,7 +31,9 @@ val_loader = DataLoader(
     drop_last=True
 )
 
-model = TransformerDecoder(model_args=model_args, train_args=training_args)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+model = TransformerDecoder(model_args=model_args, train_args=training_args).to(device)
 
 optimizer = torch.optim.Adam(
     params=model.parameters(),
@@ -39,18 +41,22 @@ optimizer = torch.optim.Adam(
     betas=training_args.optim_args.betas
 )
 
-summary_writer = SummaryWriter()
+summary_writer = SummaryWriter(log_dir=training_args.log_dir)
 trainer = Trainer(
     model=model,
     optimizer=optimizer,
     summary_writer=summary_writer,
     loader=train_loader,
     grad_accum_steps=training_args.grad_accum_steps,
+    device=device,
+    use_amp=training_args.mixed_precision,
 )
 evaluator = Evaluator(
     model=model,
     summary_writer=summary_writer,
     loader=val_loader,
+    device=device,
+    use_amp=training_args.mixed_precision,
 )
 
 logger.info("Starting training")
