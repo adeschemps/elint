@@ -37,3 +37,43 @@ def plot_sequence(seq: torch.Tensor | np.ndarray) -> Figure:
 
     fig.tight_layout()
     return fig
+
+
+def plot_sequence_prediction(
+    true: torch.Tensor | np.ndarray,
+    pred: torch.Tensor | np.ndarray,
+) -> Figure:
+    """Plot true vs predicted PDW sequence on a 2x2 grid.
+
+    True values in blue, predicted values in red.
+
+    Args:
+        true: tensor or array of shape (seq_len, 5).
+        pred: tensor or array of shape (seq_len, 5).
+    """
+    true_arr = true.numpy() if isinstance(true, torch.Tensor) else true
+    pred_arr = pred.numpy() if isinstance(pred, torch.Tensor) else pred
+
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+
+    panels = [
+        (axes[0, 0], "frequency (MHz)", FREQ_DIM),
+        (axes[0, 1], "PW (us)", PW_DIM),
+        (axes[1, 0], "DOA (deg)", DOA_DIM),
+    ]
+    for ax, ylabel, idx in panels:
+        ax.scatter(true_arr[:, TOA_DIM], true_arr[:, idx], color="blue", alpha=0.5, s=10, label="true")
+        ax.scatter(pred_arr[:, TOA_DIM], pred_arr[:, idx], color="red", alpha=0.5, s=10, label="predicted")
+        ax.set_xlabel("TOA (us)")
+        ax.set_ylabel(ylabel)
+        ax.legend()
+
+    ax = axes[1, 1]
+    ax.scatter(true_arr[1:, TOA_DIM], np.diff(true_arr[:, TOA_DIM]), color="blue", alpha=0.5, s=10, label="true")
+    ax.scatter(pred_arr[1:, TOA_DIM], np.diff(pred_arr[:, TOA_DIM]), color="red", alpha=0.5, s=10, label="predicted")
+    ax.set_xlabel("TOA (us)")
+    ax.set_ylabel("PRI (us)")
+    ax.legend()
+
+    fig.tight_layout()
+    return fig

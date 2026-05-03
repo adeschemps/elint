@@ -33,7 +33,11 @@ val_loader = DataLoader(
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-model = TransformerDecoder(model_args=model_args, train_args=training_args).to(device)
+model = torch.compile(
+    TransformerDecoder(model_args=model_args, train_args=training_args).to(device),
+    dynamic=False,
+    fullgraph=True,
+)
 
 optimizer = torch.optim.Adam(
     params=model.parameters(),
