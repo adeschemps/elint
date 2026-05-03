@@ -32,8 +32,7 @@ class TrainingArgs(StrictBaseModel):
     optim_args: OptimParams = OptimParams()
     train_ctx: int = 1024
     data_dim: int = 5
-    n_epochs: int = 2
+    n_steps: int = 10_000
+    grad_accum_steps: int = 1
+    eval_every: int = 500
     base_lr: float = 5e-4
-
-class EvalArgs(StrictBaseModel):
-    n_eval_plots: int = 16

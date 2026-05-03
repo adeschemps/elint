@@ -6,6 +6,8 @@ from tqdm import tqdm
 
 from src.config.train import DataArgs, ModelArgs, TrainingArgs
 from src.data.dataset import PulseDataset
+from src.model.evaluator import Evaluator
+from src.model.trainer import Trainer
 from src.model.transformer import TransformerDecoder
 
 model_args, data_args, training_args = (
@@ -21,9 +23,9 @@ train_loader = DataLoader(
     drop_last=True
 )
 
-test_dataset = PulseDataset(data_args.global_path, training_args.train_ctx, "val_scan")
-test_loader = DataLoader(
-    test_dataset,
+val_dataset = PulseDataset(data_args.global_path, training_args.train_ctx, "val_scan")
+val_loader = DataLoader(
+    val_dataset,
     batch_size=data_args.batch_size,
     shuffle=True,
     drop_last=True
@@ -37,39 +39,27 @@ optimizer = torch.optim.Adam(
     betas=training_args.optim_args.betas
 )
 
+summary_writer = SummaryWriter()
+trainer = Trainer(
+    model=model,
+    optimizer=optimizer,
+    summary_writer=summary_writer,
+    loader=train_loader,
+    grad_accum_steps=training_args.grad_accum_steps,
+)
+evaluator = Evaluator(
+    model=model,
+    summary_writer=summary_writer,
+    loader=val_loader,
+)
+
 logger.info("Starting training")
 
-for _ in range(training_args.n_epochs):
-    # training loop
-    with tqdm(train_loader, total=len(train_loader)) as pbar:
-        for batch in pbar:
-            # model forward
-            predicted = model(batch[:,:-1])
-            
-            # loss computation and gradient
-            loss = torch.nn.functional.mse_loss(
-                input=predicted, target=batch[:, 1:], reduction="mean"
-            )
-            model.zero_grad()
-            loss.backward()
-            optimizer.step()
+pbar = tqdm(range(training_args.n_steps))
+for step in pbar:
+    loss = trainer.train_step(step)
+    pbar.set_postfix(loss=f"{loss:.4f}")
+    if (step + 1) % training_args.eval_every == 0:
+        evaluator.evaluate(step)
 
-            pbar.set_description(f"Loss: {loss.item()}")
-
-    # testing loop
-    model.eval()
-    losses = []
-    with tqdm(test_loader, total=len(test_loader)) as pbar:
-        for batch in pbar:
-            # model forward
-            with torch.no_grad():
-                predicted = model(batch[:,:-1])
-                
-                # loss computation and gradient
-                loss = torch.nn.functional.mse_loss(
-                    input=predicted, target=batch[:, 1:], reduction="mean"
-                )
-                losses.append(loss.item())
-    mean_loss = torch.Tensor(losses).mean()
-
-    model.train()
+summary_writer.close()
