@@ -23,7 +23,7 @@ train_loader = DataLoader(
 
 test_dataset = PulseDataset(data_args.global_path, training_args.train_ctx, "val_scan")
 test_loader = DataLoader(
-    train_dataset,
+    test_dataset,
     batch_size=data_args.batch_size,
     shuffle=True,
     drop_last=True
