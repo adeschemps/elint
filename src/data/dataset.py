@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 import einops
 import numpy as np
@@ -9,15 +10,21 @@ from tqdm import tqdm
 
 
 class PulseDataset(Dataset):
-    def __init__(self, folder: Path, context: int) -> None:
+    def __init__(
+        self,
+        folder: Path,
+        context: int,
+        subfolder: Literal["train_scan", "val_scan", "test_scan"]
+    ) -> None:
         
+        datapath = folder / subfolder
         files = [
-            File(folder / fname, "r") for fname in folder.iterdir() if fname.suffix == ".h5"
+            File(datapath / fname, "r") for fname in datapath.iterdir() if fname.suffix == ".h5"
         ]
 
         self.data: list[np.ndarray] = []
         
-        logger.info("Loading data ...")
+        logger.info(f"Loading {subfolder} ...")
         
         with tqdm(files, total=len(files)) as pbar:
             for file in pbar:

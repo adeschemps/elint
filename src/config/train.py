@@ -34,3 +34,6 @@ class TrainingArgs(StrictBaseModel):
     data_dim: int = 5
     n_epochs: int = 2
     base_lr: float = 5e-4
+
+class EvalArgs(StrictBaseModel):
+    n_eval_plots: int = 16
