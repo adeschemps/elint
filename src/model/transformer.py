@@ -21,7 +21,7 @@ class TransformerDecoder(nn.Module):
         super().__init__()
         self.layers = [DecoderBlock(model_args.layer_args) for _ in range(model_args.n_layers)]
         self.attention_mask = torch.triu(
-            torch.ones(train_args.training_context, train_args.training_context) * float('-inf'),
+            torch.ones(train_args.train_ctx - 1, train_args.train_ctx - 1) * float('-inf'),
             diagonal=1
         )
         self.pdw_to_dmodel = nn.Linear(
