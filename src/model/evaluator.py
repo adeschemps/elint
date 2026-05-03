@@ -5,6 +5,8 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
+from src.data.plotting import plot_sequence
+
 
 class Evaluator:
     def __init__(
@@ -57,19 +59,12 @@ class Evaluator:
             return
 
         for i in range(plot_predicted.shape[0]):
-            fig, ax = plt.subplots()
-            ax.scatter(
-                plot_true[i, :, 0].numpy(), plot_true[i, :, 1].numpy(),
-                label="true", alpha=0.5, s=10
-            )
-            ax.scatter(
-                plot_predicted[i, :, 0].numpy(), plot_predicted[i, :, 1].numpy(),
-                label="predicted", alpha=0.5, s=10
-            )
-            ax.set_xlabel("dim 0")
-            ax.set_ylabel("dim 1")
-            ax.legend()
-            self.summary_writer.add_figure(f"Val/scatter_{i}", fig, step)
-            plt.close(fig)
+            true_fig = plot_sequence(plot_true[i])
+            self.summary_writer.add_figure(f"Val/true_{i}", true_fig, step)
+            plt.close(true_fig)
+
+            pred_fig = plot_sequence(plot_predicted[i])
+            self.summary_writer.add_figure(f"Val/predicted_{i}", pred_fig, step)
+            plt.close(pred_fig)
 
         self.model.train()
