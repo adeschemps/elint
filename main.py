@@ -40,14 +40,14 @@ model = torch.compile(
 )
 
 optimizer = torch.optim.Adam(
-    params=model.parameters(),
+    params=model.parameters(),  # ty:ignore[unresolved-attribute]
     lr=training_args.optim_args.base_lr,
     betas=training_args.optim_args.betas
 )
 
 summary_writer = SummaryWriter(log_dir=training_args.log_dir)
 trainer = Trainer(
-    model=model,
+    model=model,  # ty:ignore[invalid-argument-type]
     optimizer=optimizer,
     summary_writer=summary_writer,
     loader=train_loader,
@@ -56,11 +56,12 @@ trainer = Trainer(
     use_amp=training_args.mixed_precision,
 )
 evaluator = Evaluator(
-    model=model,
+    model=model,  # ty:ignore[invalid-argument-type]
     summary_writer=summary_writer,
     loader=val_loader,
     device=device,
     use_amp=training_args.mixed_precision,
+    checkpoint_dir=training_args.checkpoint_dir,
 )
 
 logger.info("Starting training")

@@ -37,4 +37,5 @@ class TrainingArgs(StrictBaseModel):
     eval_every: int = 500
     base_lr: float = 5e-4
     log_dir: Path | None = None
+    checkpoint_dir: Path = Path("checkpoints")
     mixed_precision: bool = True

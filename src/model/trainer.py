@@ -5,7 +5,9 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 
-def _cycle(loader: DataLoader) -> Iterator[torch.Tensor]:
+def _cycle(
+    loader: DataLoader,
+) -> Iterator[tuple[torch.Tensor, dict[str, torch.Tensor]]]:
     """Yield batches forever, restarting the loader when it is exhausted."""
     while True:
         for batch in loader:
@@ -37,7 +39,8 @@ class Trainer:
 
         losses: list[float] = []
         for _ in range(self.grad_accum_steps):
-            batch = next(self._batch_iter).to(self.device)
+            batch, _ = next(self._batch_iter)
+            batch = batch.to(self.device)
             with torch.amp.autocast(
                 device_type=self.device,
                 dtype=torch.bfloat16,
